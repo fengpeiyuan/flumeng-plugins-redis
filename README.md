@@ -5,16 +5,15 @@ Redis 2.8.17.
 
 ## Current Supported Features
 
-* Source topic push-mode using Redis [SUBSCRIBE](http://redis.io/commands/subscribe) command (multiple channels)
+* Source topic push-mode using Redis [SUBSCRIBE](http://redis.io/commands/subscribe) command 
 * Source list pull-mode using Redis [LINDEX](http://redis.io/commands/lindex),[LREM](http://redis.io/commands/lrem) commands
 
 ## Usage
 
 * Build or Download jar.
-    * Checkout and build.
-        Build with ```mvn package``` command.
+     Checkout and build using ```mvn package```
 * Copy ```flumeng-plugins-redis-[VERSION].jar``` or ```flumeng-plugins-redis-[VERSION]-jar-with-dependencies.jar``` into your flume
-   library path. If you use ```flumeng-plugins-redis-[VERSION].jar```, you have to download Jedis. ([https://github.com/xetorthio/jedis](https://github.com/xetorthio/jedis)) and copy it to flume library path.
+   library path. 
 * Copy or create configuration file or sample configuration file to some place.
 * Run.
 	 Following command is sample for RedisSubscribeEventDrivenSource.
