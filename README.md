@@ -1,28 +1,28 @@
-# Flume-ng plugins for redis
+# Flume-ng plugins with pull-mode source and ack in sink using redis list
 
 Flume-ng ([http://flume.apache.org](http://flume.apache.org)). This plugins base on Apache Flume 1.5.0.1 and
 Redis 2.8.17.
 
-## Current Supported Features
+## CFeatures
 
-* Source topic push-mode using Redis [SUBSCRIBE](http://redis.io/commands/subscribe) command 
-* Source list pull-mode using Redis [LINDEX](http://redis.io/commands/lindex),[LREM](http://redis.io/commands/lrem) commands
+* Source list pull-mode using Redis [RPOPLPUSH](http://redisdoc.com/list/rpoplpush.html) command
+* Sink with ack-mode using Redis [LREM](http://redis.io/commands/lrem) command
 
 ## Usage
 
 * Build or Download jar.
-     Checkout and build using ```mvn package```
+     Checkout and build using ```mvn clean package```
 * Copy ```flumeng-plugins-redis-[VERSION].jar``` or ```flumeng-plugins-redis-[VERSION]-jar-with-dependencies.jar``` into your flume
    library path. 
 * Copy or create configuration file or sample configuration file to some place.
 * Run.
-	 Following command is sample for RedisSubscribeEventDrivenSource.
-
-			bin/flume-ng agent -n agent -c conf -f conf/example-RedisSubscribeEventDrivenSource.properties -Dflume.root.logger=DEBUG,console
-	
 	 Following commend is sample for RedisListPollableSource
 	
 			bin/flume-ng agent -n agent -c conf -f conf/example-RedisListPollableSource.properties -Dflume.root.logger=DEBUG,console
+
+	 Following command is sample for RedisListPollableSource source and WithRedisListAckSink sink.
+
+			bin/flume-ng agent -n agent -c conf -f conf/example-PullModeSourceAndAckModeSinkWithRedisList.properties
 
 ## License
 

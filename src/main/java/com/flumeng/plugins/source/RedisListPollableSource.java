@@ -10,16 +10,25 @@ import org.apache.flume.event.EventBuilder;
 import org.apache.flume.source.AbstractSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import redis.clients.jedis.Jedis;
 
-public class RedisListPollableSource extends AbstractSource implements Configurable, PollableSource{
+/*
+ * 
+               ||(head) ***** list todo ****** (tail)|| --> pop --> |
+											                        |
+	|<-------------------------	(element) <-------------------------|
+    |
+	|--> push -->||(head) **** list ack  ***** (tail)||
 
+*/
+
+public class RedisListPollableSource extends AbstractSource implements Configurable, PollableSource{
   private Logger logger = LoggerFactory.getLogger(RedisListPollableSource.class);
   private Jedis jedis;
   private String host;
   private int port;
-  private String listName;
+  private String listTodoName;
+  private String listAckName;
   private int timeout;
   private String password;
   private int database;
@@ -29,13 +38,13 @@ public class RedisListPollableSource extends AbstractSource implements Configura
   public void configure(Context context) {
     host = context.getString("host", "localhost");
     port = context.getInteger("port", 6379);
-    listName = context.getString("listName");
+    listTodoName = context.getString("listTodoName");
+    listAckName = context.getString("listAckName");
     timeout = context.getInteger("timeout", 2000);
     password = context.getString("password", "");
     database = context.getInteger("database", 0);
     charset = context.getString("charset", "utf-8");
-
-    if (listName == null) { throw new RuntimeException("Redis list name must be set."); }
+    if (listTodoName == null || listAckName == null) { throw new RuntimeException("Redis undo or redo list name must be set."); }
     logger.info("Flume Redis list source Configured");
   }
 
@@ -60,18 +69,17 @@ public class RedisListPollableSource extends AbstractSource implements Configura
 
   @Override
   public Status process() throws EventDeliveryException {
-    Status status = Status.READY;;
+    Status status = null;
     ChannelProcessor channelProcessor = getChannelProcessor();
     try {
-    	String listIndex = jedis.lindex(listName, -1);
-    	if (null != listIndex) {
-    		Event event = EventBuilder.withBody(listIndex.getBytes(charset));
+    	String listUndoIndex = jedis.rpoplpush(listTodoName, listAckName);
+    	if (null != listUndoIndex) {
+    		Event event = EventBuilder.withBody(listUndoIndex.getBytes(charset));
     		channelProcessor.processEvent(event);
-    		jedis.lrem(listName, 0, listIndex);
     		status = Status.READY;
     	} else {
     		throw new EventDeliveryException(
-            "List index value is null,list name: " + listName);
+            "List rpoplpush return null,source listUndoName name: " + listTodoName + ",dest listRedoName:"+listAckName);
     	}
     } catch (Throwable e) {
       status = Status.BACKOFF;
@@ -79,7 +87,6 @@ public class RedisListPollableSource extends AbstractSource implements Configura
         throw (Error) e;
       }
     } 
-
     return status;
   }
 }
