@@ -1,9 +1,9 @@
-# Flume-ng plugins with pull-mode source and ack in sink using redis list
+# Flume-ng plugin with Pull-mode source and Ack-mode sink using redis list
 
 Flume-ng ([http://flume.apache.org](http://flume.apache.org)). This plugins base on Apache Flume 1.5.0.1 and
 Redis 2.8.17.
 
-## CFeatures
+## Features
 
 * Source list pull-mode using Redis [RPOPLPUSH](http://redisdoc.com/list/rpoplpush.html) command
 * Sink with ack-mode using Redis [LREM](http://redis.io/commands/lrem) command
