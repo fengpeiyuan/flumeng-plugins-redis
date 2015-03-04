@@ -18,34 +18,28 @@ import java.nio.charset.Charset;
 public class RedisSubscribeEventDrivenSource extends AbstractSource implements Configurable, EventDrivenSource {
 
   private Logger logger = LoggerFactory.getLogger(RedisSubscribeEventDrivenSource.class);
-
   private ChannelProcessor channelProcessor;
-
   private Jedis jedis;
-  private String redisHost;
-  private int redisPort;
-  private String[] redisChannels;
-  private int redisTimeout;
-  private String redisPassword;
-  private int redisDatabase;
-  private String messageCharset;
-
-  private boolean runFlag;
-
+  private String host;
+  private int port;
+  private int timeout;
+  private String password;
+  private int database;
+  private String charset;
+  private String[] channels;
+  private boolean running;
 
   @Override
   public void configure(Context context) {
-    redisHost = context.getString("redisHost", "localhost");
-    redisPort = context.getInteger("redisPort", 6379);
-    redisTimeout = context.getInteger("redisTimeout", 2000);
-    redisPassword = context.getString("redisPassword", "");
-    redisDatabase = context.getInteger("redisDatabase", 0);
-    messageCharset = context.getString("messageCharset", "utf-8");
-
-    String redisChannel = context.getString("redisChannel");
-    if (redisChannel == null) { throw new RuntimeException("Redis Channel must be set."); }
-    redisChannels = redisChannel.split(",");
-
+    host = context.getString("host", "localhost");
+    port = context.getInteger("port", 6379);
+    timeout = context.getInteger("timeout", 2000);
+    password = context.getString("password", "");
+    database = context.getInteger("database", 0);
+    charset = context.getString("charset", "utf-8");
+    String channel = context.getString("channel");
+    if (channel == null) { throw new RuntimeException("Redis Channel must be set."); }
+    channels = channel.split(",");
     logger.info("Flume Redis Subscribe Source Configured");
   }
 
@@ -54,37 +48,27 @@ public class RedisSubscribeEventDrivenSource extends AbstractSource implements C
     super.start();
 
     channelProcessor = getChannelProcessor();
-
-    // TODO: consider using Connection Pool.
-    jedis = new Jedis(redisHost, redisPort, redisTimeout);
-    if (!"".equals(redisPassword)) {
-      jedis.auth(redisPassword);
+    jedis = new Jedis(host, port, timeout);
+    if (!"".equals(password)) {
+      jedis.auth(password);
     }
-    if (redisDatabase != 0) {
-      jedis.select(redisDatabase);
+    if (database != 0) {
+      jedis.select(database);
     }
-    logger.info("Redis Connected. (host: " + redisHost + ", port: " + String.valueOf(redisPort)
-                + ", timeout: " + String.valueOf(redisTimeout)
-                + ", database: " + String.valueOf(redisDatabase) + ")");
-
-    runFlag = true;
-
+    logger.info("Redis Connected. (host: " + host + ", port: " + String.valueOf(port) + ", timeout: " + String.valueOf(timeout) + ", database: " + String.valueOf(database) + ")");
+    running = true;
     new Thread(new SubscribeManager()).start();
   }
 
   @Override
   public synchronized void stop() {
     super.stop();
-
-    runFlag = false;
-
+    running = false;
     try {
       Thread.sleep(100);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-
-    // TODO: if we use jedis connection pool, destroy code must be inserted.
   }
 
   private class SubscribeManager implements Runnable {
@@ -95,38 +79,31 @@ public class RedisSubscribeEventDrivenSource extends AbstractSource implements C
     @Override
     public void run() {
       logger.info("Subscribe Manager Thread is started.");
-
       jedisPubSub = new JedisSubscribeListener();
       subscribeRunner = new Thread(new SubscribeRunner(jedisPubSub));
-
       subscribeRunner.start();
-
-      while (runFlag) {
+      while (running) {
         try {
           Thread.sleep(50);
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
       }
-
-      // TODO: think better way for thread safety.
-      jedisPubSub.unsubscribe(redisChannels);
+      jedisPubSub.unsubscribe(channels);
     }
   }
 
   private class SubscribeRunner implements Runnable {
 
     private JedisPubSub jedisPubSub;
-
     public SubscribeRunner(JedisPubSub jedisPubSub) {
       logger.info("Subscribe Runner Thread is started.");
-
       this.jedisPubSub = jedisPubSub;
     }
 
     @Override
     public void run() {
-      jedis.subscribe(jedisPubSub, redisChannels);
+      jedis.subscribe(jedisPubSub, channels);
     }
   }
 
@@ -134,13 +111,12 @@ public class RedisSubscribeEventDrivenSource extends AbstractSource implements C
 
     @Override
     public void onMessage(String channel, String message) {
-      Event event = EventBuilder.withBody(message, Charset.forName(messageCharset));
+      Event event = EventBuilder.withBody(message, Charset.forName(charset));
       channelProcessor.processEvent(event);
     }
 
     @Override
     public void onPMessage(String pattern, String channel, String message) {
-      // TODO: Pattern subscribe feature will be implemented.
     }
 
     @Override
@@ -155,12 +131,10 @@ public class RedisSubscribeEventDrivenSource extends AbstractSource implements C
 
     @Override
     public void onPUnsubscribe(String pattern, int subscribedChannels) {
-      // TODO: Pattern subscribe feature will be implemented.
     }
 
     @Override
     public void onPSubscribe(String pattern, int subscribedChannels) {
-      // TODO: Pattern subscribe feature will be implemented.
     }
   }
 }

@@ -16,44 +16,39 @@ import redis.clients.jedis.Jedis;
 public class RedisListPollableSource extends AbstractSource implements Configurable, PollableSource{
 
   private Logger logger = LoggerFactory.getLogger(RedisListPollableSource.class);
-
   private Jedis jedis;
-
-  private String redisHost;
-  private int redisPort;
-  private String redisListName;
-  private int redisTimeout;
-  private String redisPassword;
-  private int redisDatabase;
-  private String messageCharset;
+  private String host;
+  private int port;
+  private String listName;
+  private int timeout;
+  private String password;
+  private int database;
+  private String charset;
 
   @Override
   public void configure(Context context) {
-    redisHost = context.getString("redisHost", "localhost");
-    redisPort = context.getInteger("redisPort", 6379);
-    redisListName = context.getString("redisListName");
-    redisTimeout = context.getInteger("redisTimeout", 2000);
-    redisPassword = context.getString("redisPassword", "");
-    redisDatabase = context.getInteger("redisDatabase", 0);
-    messageCharset = context.getString("messageCharset", "utf-8");
+    host = context.getString("host", "localhost");
+    port = context.getInteger("port", 6379);
+    listName = context.getString("listName");
+    timeout = context.getInteger("timeout", 2000);
+    password = context.getString("password", "");
+    database = context.getInteger("database", 0);
+    charset = context.getString("charset", "utf-8");
 
-    if (redisListName == null) { throw new RuntimeException("Redis list name must be set."); }
-
+    if (listName == null) { throw new RuntimeException("Redis list name must be set."); }
     logger.info("Flume Redis list source Configured");
   }
 
   @Override
   public synchronized void start() {
-    jedis = new Jedis(redisHost, redisPort, redisTimeout);
-    if (!"".equals(redisPassword)) {
-      jedis.auth(redisPassword);
+    jedis = new Jedis(host, port, timeout);
+    if (!"".equals(password)) {
+      jedis.auth(password);
     }
-    if (redisDatabase != 0) {
-      jedis.select(redisDatabase);
+    if (database != 0) {
+      jedis.select(database);
     }
-
-    logger.info("Redis Connected. (host: " + redisHost + ", port: " + String.valueOf(redisPort)
-                + ", timeout: " + String.valueOf(redisTimeout) + ")");
+    logger.info("Redis Connected. (host: " + host + ", port: " + String.valueOf(port) + ", timeout: " + String.valueOf(timeout) + ")");
     super.start();
   }
 
@@ -68,15 +63,15 @@ public class RedisListPollableSource extends AbstractSource implements Configura
     Status status = Status.READY;;
     ChannelProcessor channelProcessor = getChannelProcessor();
     try {
-    	String listIndex = jedis.lindex(redisListName, -1);
+    	String listIndex = jedis.lindex(listName, -1);
     	if (null != listIndex) {
-    		Event event = EventBuilder.withBody(listIndex.getBytes(messageCharset));
+    		Event event = EventBuilder.withBody(listIndex.getBytes(charset));
     		channelProcessor.processEvent(event);
-    		jedis.lrem(redisListName, 0, listIndex);
+    		jedis.lrem(listName, 0, listIndex);
     		status = Status.READY;
     	} else {
     		throw new EventDeliveryException(
-            "List index value is null,list name: " + redisListName);
+            "List index value is null,list name: " + listName);
     	}
     } catch (Throwable e) {
       status = Status.BACKOFF;
