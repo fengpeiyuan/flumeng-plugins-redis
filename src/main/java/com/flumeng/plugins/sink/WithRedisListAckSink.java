@@ -56,7 +56,7 @@ public class WithRedisListAckSink extends AbstractSink implements Configurable {
 
 		  @Override
 		  public Status process() throws EventDeliveryException {
-		    Status status = null;
+		    Status status = Status.READY;
 		    Channel channel = getChannel();
 		    Transaction transaction = channel.getTransaction();
 		    try {
@@ -67,7 +67,6 @@ public class WithRedisListAckSink extends AbstractSink implements Configurable {
 		      //ack in list
 		      if (jedis.lrem(listAckName, 0, new String(event.getBody(), charset)) >= 0) {
 		        transaction.commit();
-		        status = Status.READY;
 		      } 
 		    } catch (Throwable e) {
 		      transaction.rollback();

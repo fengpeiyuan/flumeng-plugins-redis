@@ -1,4 +1,4 @@
-# Flume-ng plugin with Pull-mode source and Ack-mode sink using redis list
+# Flume-ng plugin with Pull-mode source and Ack-mode sink using Redis List
 
 Flume-ng ([http://flume.apache.org](http://flume.apache.org)). This plugins base on Apache Flume 1.5.0.1 and
 Redis 2.8.17.
@@ -14,7 +14,7 @@ Redis 2.8.17.
      Checkout and build using ```mvn clean package```
 * Copy ```flumeng-plugins-redis-[VERSION].jar``` or ```flumeng-plugins-redis-[VERSION]-jar-with-dependencies.jar``` into your flume
    library path. 
-* Copy or create configuration file or sample configuration file to some place.
+* Copy or create configuration file or sample configuration file to some place(redis list using by source and sink must be the same redis instance).
 * Run.
 	 Following commend is sample for RedisListPollableSource
 	

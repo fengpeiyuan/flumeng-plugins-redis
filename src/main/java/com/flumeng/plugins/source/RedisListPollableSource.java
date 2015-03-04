@@ -69,17 +69,13 @@ public class RedisListPollableSource extends AbstractSource implements Configura
 
   @Override
   public Status process() throws EventDeliveryException {
-    Status status = null;
+    Status status = Status.READY;
     ChannelProcessor channelProcessor = getChannelProcessor();
     try {
     	String listUndoIndex = jedis.rpoplpush(listTodoName, listAckName);
     	if (null != listUndoIndex) {
     		Event event = EventBuilder.withBody(listUndoIndex.getBytes(charset));
     		channelProcessor.processEvent(event);
-    		status = Status.READY;
-    	} else {
-    		throw new EventDeliveryException(
-            "List rpoplpush return null,source listUndoName name: " + listTodoName + ",dest listRedoName:"+listAckName);
     	}
     } catch (Throwable e) {
       status = Status.BACKOFF;
