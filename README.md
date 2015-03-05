@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/[fengpeiyuan]/[flumeng-plugins-redis].png)](https://travis-ci.org/[fengpeiyuan]/[flumeng-plugins-redis])
+[![Build Status](https://travis-ci.org/fengpeiyuan/flumeng-plugins-redis.png)](https://travis-ci.org/fengpeiyuan/flumeng-plugins-redis)
 # Flume-ng plugin with Pull-mode source and Ack-mode sink using Redis List
 
 Flume-ng ([http://flume.apache.org](http://flume.apache.org)). This plugins base on Apache Flume 1.5.0.1 and
